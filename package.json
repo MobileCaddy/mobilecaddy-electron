@@ -1,0 +1,22 @@
+{
+  "name": "mobilecaddy-electron",
+  "version": "0.0.1",
+  "description": "Support for running a MobileCaddy Salesforce application in an electron wrapper",
+  "author": "MobileCaddy",
+  "license": "MIT",
+  "preferGlobal": false,
+  "main": "lib/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mobilecaddy",
+    "salesforce",
+    "electron"
+  ],
+  "dependencies": {
+    "electron-json-storage": "^2.0.1",
+    "query-string": "^4.2.3",
+    "rimraf": "^2.5.4"
+  }
+}
