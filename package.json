@@ -4,6 +4,7 @@
   "description": "Support for running a MobileCaddy Salesforce application in an electron wrapper",
   "author": "MobileCaddy",
   "license": "MIT",
+  "repository": "https://github.com/mobilecaddy/mobilecaddy-electron",
   "preferGlobal": false,
   "main": "lib/main.js",
   "scripts": {
