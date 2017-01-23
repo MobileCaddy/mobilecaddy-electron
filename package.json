@@ -18,8 +18,8 @@
   ],
   "dependencies": {
     "electron-json-storage": "^2.0.1",
+    "electron-machine-id": "^1.0.9",
     "query-string": "^4.2.3",
-    "macaddress": "^0.2.8",
     "rimraf": "^2.5.4",
     "sqlite3": "^3.1.8"
   }
