@@ -1,6 +1,6 @@
 {
   "name": "mobilecaddy-electron",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Support for running a MobileCaddy Salesforce application in an electron wrapper",
   "author": "MobileCaddy",
   "license": "MIT",

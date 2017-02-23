@@ -1,3 +1,19 @@
+### 1.0.2 (2017-02-23)
+
+
+#### Bug Fixes
+
+* NONE
+
+#### Features
+
+* Wrapping inserts/updates inside transactions to drastically increase performance
+
+#### Breaking Changes
+
+* NONE
+
+
 ### 1.0.1 (2017-02-02)
 
 
