@@ -1,3 +1,19 @@
+### 1.0.3 (2017-02-28)
+
+
+#### Bug Fixes
+
+* Logout now working - correction to appData matching for logout cleanup
+
+#### Features
+
+* NONE
+
+#### Breaking Changes
+
+* NONE
+
+
 ### 1.0.2 (2017-02-23)
 
 
