@@ -1,3 +1,20 @@
+### 1.0.4 (2017-03-02)
+
+
+#### Bug Fixes
+
+* Erroneous creation of dupe records removed. Manifested itself in a "_soupEntryId Constraint" popup
+
+#### Features
+
+* NONE
+
+#### Breaking Changes
+
+* NONE
+
+
+
 ### 1.0.3 (2017-02-28)
 
 
