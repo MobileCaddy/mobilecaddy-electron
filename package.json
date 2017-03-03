@@ -24,6 +24,7 @@
     "sqlite3": "^3.1.8"
   },
   "devDependencies": {
-    "mobilecaddy-codeflow": "latest"
+    "mobilecaddy-codeflow": "latest",
+    "qunitjs": "^2.1.1"
   }
 }
