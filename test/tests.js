@@ -23,6 +23,16 @@ myDB = new sqlite3.Database(appDataPath + "/net.mobilecaddy-electron-test.db");
 
 const TEST_TABLE = 'testTable';
 
+let testData = [
+  {Id : 'id111', Name: "T1"},
+  {Id : 'id222', Name: "T2"},
+]
+
+let testData2 = [
+  {Id : 'id111', Name: "T1"},
+  {Id : 'id222', Name: "T1"},
+]
+
 var soups = [
   {
     table: 'appSoup',
@@ -156,10 +166,6 @@ function clearTable(table) {
 function addTestData(){
   // console.log(logTag, "addTestData");
   return new Promise(function(resolve, reject) {
-    let testData = [
-      {Id : 'id111', Name: "T1"},
-      {Id : 'id222', Name: "T2"},
-    ]
     myDB.run("BEGIN");
     testData.forEach(function(i){
       let sql = "INSERT OR IGNORE INTO " + TEST_TABLE + "('Id', 'Name') VALUES ('" + i.Id + "','" + i.Name + "')";
@@ -170,6 +176,21 @@ function addTestData(){
     });
   });
 }
+
+function addTestData2(){
+  // console.log(logTag, "addTestData");
+  return new Promise(function(resolve, reject) {
+    myDB.run("BEGIN");
+    testData2.forEach(function(i){
+      let sql = "INSERT OR IGNORE INTO " + TEST_TABLE + "('Id', 'Name') VALUES ('" + i.Id + "','" + i.Name + "')";
+      myDB.run(sql);
+    });
+    myDB.run("COMMIT", function(err, row){
+      resolve();
+    });
+  });
+}
+
 
 /*******************************************************************************
 *
@@ -220,7 +241,7 @@ QUnit.module( "IPC", function( hooks ){
   /**
    * U P S E R T
    */
-  QUnit.module("upsertSoupEntries", function() {
+  QUnit.skip("upsertSoupEntries", function() {
 
     // TEST SCENARIOS
     //    unknown table
@@ -556,7 +577,7 @@ QUnit.module( "IPC", function( hooks ){
     });
 
 
-    QUnit.test( "non-empty table", function( assert ) {
+    QUnit.test( "all", function( assert ) {
       var done = assert.async();
       clearTable(TEST_TABLE).then(function(){
         return addTestData();
@@ -572,6 +593,60 @@ QUnit.module( "IPC", function( hooks ){
       });
     });
 
+
+
+    QUnit.test( "col = val - no match single", function( assert ) {
+      var done = assert.async();
+      clearTable(TEST_TABLE).then(function(){
+        return addTestData();
+      }).then(function(){
+        let smartstore = cordova.require("com.salesforce.plugin.smartstore");
+        let querySpec = smartstore.buildExactQuerySpec("Id", "DUFF", 50);
+
+        let res = ipcRenderer.sendSync('smartstore', {method: 'querySoup', args: {table : TEST_TABLE,querySpec : querySpec}});
+        console.log(logTag, res);
+        assert.equal( res.length, 0, "array of 0 returned");
+        assert.equal( typeof(res), "object", "object returned");
+        done();
+      });
+    });
+
+
+    QUnit.test( "col = val - match single", function( assert ) {
+      var done = assert.async();
+      clearTable(TEST_TABLE).then(function(){
+        return addTestData();
+      }).then(function(){
+        let smartstore = cordova.require("com.salesforce.plugin.smartstore");
+        let querySpec = smartstore.buildExactQuerySpec("Id", testData[0].Id, 50);
+
+        let res = ipcRenderer.sendSync('smartstore', {method: 'querySoup', args: {table : TEST_TABLE,querySpec : querySpec}});
+        console.log(logTag, res);
+        assert.equal( res.length, 1, "array of 1 returned");
+        assert.equal( typeof(res), "object", "object returned");
+        assert.equal( res[0].Name, testData[0].Name, "[0]Name=" + testData[0].Name);
+        done();
+      });
+    });
+
+
+    QUnit.test( "col = val - match multi", function( assert ) {
+      var done = assert.async();
+      clearTable(TEST_TABLE).then(function(){
+        return addTestData2();
+      }).then(function(){
+        let smartstore = cordova.require("com.salesforce.plugin.smartstore");
+        let querySpec = smartstore.buildExactQuerySpec("Name", testData2[0].Name, 50);
+
+        let res = ipcRenderer.sendSync('smartstore', {method: 'querySoup', args: {table : TEST_TABLE,querySpec : querySpec}});
+        console.log(logTag, res);
+        assert.equal( res.length, 2, "array of 2 returned");
+        assert.equal( typeof(res), "object", "object returned");
+        assert.equal( res[0].Id, testData2[0].Id, "[0]Id=" + testData2[0].Id);
+        assert.equal( res[1].Id, testData2[1].Id, "[0]Id=" + testData2[1].Id);
+        done();
+      });
+    });
   }); // end querySoup sub module
 
 });
