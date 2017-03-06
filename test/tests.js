@@ -241,7 +241,7 @@ QUnit.module( "IPC", function( hooks ){
   /**
    * U P S E R T
    */
-  QUnit.skip("upsertSoupEntries", function() {
+  QUnit.module("upsertSoupEntries", function() {
 
     // TEST SCENARIOS
     //    unknown table
