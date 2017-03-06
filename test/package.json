@@ -1,0 +1,12 @@
+{
+  "name": "mobilecaddy-desktop-test",
+  "productName": "Test suite for mobilecaddy-electron",
+  "version": "1.0.0",
+  "author": "MobileCaddy <support@mobilecaddy.net>",
+  "buildName": "BIZ001",
+  "loginEndpoint": "https://lggin.salesforce.com",
+  "salesforceApiVersion": "v30.0",
+  "build": {
+    "appId": "net.mobilecaddy-electron-test"
+  }
+}

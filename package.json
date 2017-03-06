@@ -1,6 +1,6 @@
 {
   "name": "mobilecaddy-electron",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Support for running a MobileCaddy Salesforce application in an electron wrapper",
   "author": "MobileCaddy",
   "license": "MIT",
@@ -8,7 +8,7 @@
   "preferGlobal": false,
   "main": "lib/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "electron test/main.js",
     "rebuild": "electron-rebuild -f -w sqlite3"
   },
   "keywords": [
@@ -22,5 +22,9 @@
     "query-string": "^4.2.3",
     "rimraf": "^2.5.4",
     "sqlite3": "^3.1.8"
+  },
+  "devDependencies": {
+    "mobilecaddy-codeflow": "latest",
+    "qunitjs": "^2.1.1"
   }
 }

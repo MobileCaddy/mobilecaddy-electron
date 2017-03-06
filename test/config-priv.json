@@ -1,0 +1,7 @@
+{
+  "prodBuild": true,
+  "debug": true,
+  "testBuild": true,
+  "salesforce_consumer_key" : "DUMMY_KEY",
+  "callbackUrl": "sfdc://DUMMY"
+}
