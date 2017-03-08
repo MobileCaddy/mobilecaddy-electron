@@ -1,3 +1,20 @@
+### 1.0.5 (2017-03-08)
+
+
+#### Bug Fixes
+
+* NONE
+
+#### Features
+
+* Added "About" window and Recovery support
+
+#### Breaking Changes
+
+* NONE
+
+
+
 ### 1.0.4 (2017-03-02)
 
 
