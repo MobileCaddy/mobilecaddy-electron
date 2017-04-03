@@ -1,3 +1,20 @@
+### 1.0.5 (2017-04-03)
+
+
+#### Bug Fixes
+
+* _soupLastModifiedDate field was missing. Caused issues with erroneous 100498 statuses remaining.
+
+#### Features
+
+* NONE
+
+#### Breaking Changes
+
+* NONE
+
+
+
 ### 1.0.4 (2017-03-02)
 
 
