@@ -22,6 +22,13 @@ myDB = new sqlite3.Database(appDataPath + "/net.mobilecaddy-electron-test.db");
 
 
 const TEST_TABLE = 'testTable';
+const TEST_TABLE_SPEC = {
+  table: TEST_TABLE,
+    indexSpecs: [
+                 { path: 'Name', type: 'string' },
+                 { path: 'Id', type: 'string' }
+                 ]
+  };
 
 let testData = [
   {Id : 'id111', Name: "T1"},
@@ -116,13 +123,7 @@ var soups = [
                  { path: 'mobilecaddy1__Application_User_Device__c',
                    type: 'string' }]
   },
-  {
-    table: TEST_TABLE,
-    indexSpecs: [
-                 { path: 'Name', type: 'string' },
-                 { path: 'Id', type: 'string' }
-                 ]
-  }
+  TEST_TABLE_SPEC
 ]
 
 QUnit.config.reorder = false;
@@ -131,48 +132,31 @@ function setLogTag(){
   logTag = "QU > " + QUnit.config.current.module.name + " > " + QUnit.config.current.testName + "\n";
 }
 
-function createTestSoup(){
+function createTestSoup(soupName){
+  // Note at the moment we hardcoded use TEST_TABLE_SPEC
   return new Promise(function(resolve, reject) {
-    let createSql = "CREATE TABLE " + TEST_TABLE + "('_soupEntryId' INTEGER PRIMARY KEY ASC, 'Id', 'Name')";
-    myDB.run(createSql, function(err, row){
-      if (!err || err.toString().includes("already exists")) {
-        resolve();
-      } else {
-        console.error(logTag, err);
-        reject();
-      }
-    });
-  });
-}
-
-function clearTable(table) {
-  return new Promise(function(resolve, reject) {
-    createTestSoup().then(function(){
-      myDB.run("DELETE FROM " + TEST_TABLE, function(err, row){
-        // console.log(logTag, "row", row);
-        if (!err) {
-          resolve();
-        } else {
-          console.error(logTag, "err", err);
-          reject();
-        }
-      });
-    }).catch(function(e){
-      console.error(logTag, e);
-    });
+    ipcRenderer.sendSync('smartstore', {method: 'removeSoup', args: TEST_TABLE_SPEC});
+    ipcRenderer.sendSync('smartstore', {method: 'registerSoup', args: TEST_TABLE_SPEC});
+    resolve();
   });
 }
 
 function addTestData(){
   // console.log(logTag, "addTestData");
   return new Promise(function(resolve, reject) {
-    myDB.run("BEGIN");
-    testData.forEach(function(i){
-      let sql = "INSERT OR IGNORE INTO " + TEST_TABLE + "('Id', 'Name') VALUES ('" + i.Id + "','" + i.Name + "')";
-      myDB.run(sql);
-    });
-    myDB.run("COMMIT", function(err, row){
-      resolve();
+    myDB.serialize(function() {
+      myDB.run("BEGIN");
+      testData.forEach(function(i){
+        let soupLastModifiedDate = new Date().valueOf();
+        let sql = "INSERT OR IGNORE INTO " + TEST_TABLE + "('Id', 'Name', '_soupLastModifiedDate') VALUES ('" + i.Id + "','" + i.Name + "'," + soupLastModifiedDate + ")";
+        myDB.run(sql);
+      });
+      myDB.run("COMMIT", function(err, row){
+        let sql = "SELECT * FROM " + TEST_TABLE;
+        myDB.all(sql, [], function(err, rows){
+          resolve(rows);
+        });
+      });
     });
   });
 }
@@ -278,7 +262,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'empty DB - empty entries'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         let res = ipcRenderer.sendSync('smartstore', {method: 'upsertSoupEntries', args: {table : TEST_TABLE, entries : [], externalIdPath : 'Id'}});
         console.log(logTag, res);
         assert.equal( res.length, 0, "[ ] returned");
@@ -290,7 +274,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'empty DB - ok single - with externalIdPath -> insert'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         let myId = 'id111';
         let myName = 'T1';
 
@@ -301,6 +285,7 @@ QUnit.module( "IPC", function( hooks ){
         assert.equal( res[0].Id, myId, "Id=" + myId);
         assert.equal( res[0].Name, myName, "Name=" + myName);
         assert.equal( res[0]._soupEntryId, 1, "_soupEntryId = 1");
+        assert.notEqual( res[0]._soupLastModifiedDate, null, "_soupLastModifiedDate != null");
         done();
       })
     });
@@ -308,7 +293,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'empty DB - ok single - matching externalIdPath supplied -> insert'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         let myId = 'id111';
         let myName = 'T1';
 
@@ -327,7 +312,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'empty DB - ok multi - externalIdPath supplied -> insert'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         let myName = 'T1';
         let myName2 = 'T2';
 
@@ -346,7 +331,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'empty DB - ok multi - matching externalIdPath supplied -> insert'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         let myId = 'id111';
         let myName = 'T1';
         let myId2 = 'id222';
@@ -369,7 +354,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'empty DB - ok multi - mixed externalIdPath supplied -> insert'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         let myId = 'id111';
         let myName = 'T1';
         let myName2 = 'T2';
@@ -390,7 +375,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'non-empty DB - ok single - with externalIdPath -> insert'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData();
       }).then(function(){
         console.log(logTag, "H1");
@@ -411,7 +396,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'non-empty DB - ok single - matcing externalIdPath -> insert'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData();
       }).then(function(){
         myId = 'id333';
@@ -430,7 +415,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'non-empty DB - ok multi - with externalIdPath -> insert'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData();
       }).then(function(){
         myId = 'id333';
@@ -455,7 +440,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'non-empty DB - ok multi - mixed externalIdPath -> insert'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData();
       }).then(function(){
         myId = 'id333';
@@ -478,20 +463,20 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'non-empty DB - ok single - matching externalIdPath -> update'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData();
-      }).then(function(){
-        console.log(logTag, "H1");
-        myId = 'id111'; // This matches an existing entry
-        let myName = 'T3';
+      }).then(function(rows){
+        console.log(logTag, "testData", rows);
 
-        let res = ipcRenderer.sendSync('smartstore', {method: 'upsertSoupEntries', args: {table : TEST_TABLE, entries : [{'Id': myId, 'Name': myName}], externalIdPath : 'Id'}});
+        let myNewName = 'T3';
+        let res = ipcRenderer.sendSync('smartstore', {method: 'upsertSoupEntries', args: {table : TEST_TABLE, entries : [{'Id': rows[0].Id, 'Name': myNewName}], externalIdPath : 'Id'}});
         console.log(logTag, res);
         assert.equal( res.length, 1, "array of 1 returned");
         assert.equal( typeof(res), "object", "object returned");
-        assert.equal( res[0].Id, myId, "Id=" + myId);
-        assert.equal( res[0].Name, myName, "Name=" + myName);
+        assert.equal( res[0].Id, rows[0].Id, "Id=" + rows[0].Id);
+        assert.equal( res[0].Name, myNewName, "Name=" + myNewName);
         assert.equal( res[0]._soupEntryId, 1, "_soupEntryId = 1");
+        assert.notEqual( res[0]._soupLastModifiedDate, rows[0]._soupLastModifiedDate, "_soupLastModifiedDate (" + res[0]._soupLastModifiedDate + ") != " + rows[0]._soupLastModifiedDate);
         done();
       })
     });
@@ -499,7 +484,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'non-empty DB - ok multi - matching externalIdPath -> update'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData();
       }).then(function(){
         console.log(logTag, "H1");
@@ -525,7 +510,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "'non-empty DB - ok multi - matching externalIdPath -> insert and update'", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData();
       }).then(function(){
         console.log(logTag, "H1");
@@ -564,7 +549,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "empty table", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         let smartstore = cordova.require("com.salesforce.plugin.smartstore");
         let querySpec = smartstore.buildAllQuerySpec("_soupEntryId", null, 50);
 
@@ -579,7 +564,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "all", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData();
       }).then(function(){
         let smartstore = cordova.require("com.salesforce.plugin.smartstore");
@@ -597,7 +582,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "col = val - no match single", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData();
       }).then(function(){
         let smartstore = cordova.require("com.salesforce.plugin.smartstore");
@@ -614,7 +599,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "col = val - match single", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData();
       }).then(function(){
         let smartstore = cordova.require("com.salesforce.plugin.smartstore");
@@ -632,7 +617,7 @@ QUnit.module( "IPC", function( hooks ){
 
     QUnit.test( "col = val - match multi", function( assert ) {
       var done = assert.async();
-      clearTable(TEST_TABLE).then(function(){
+      createTestSoup(TEST_TABLE).then(function(){
         return addTestData2();
       }).then(function(){
         let smartstore = cordova.require("com.salesforce.plugin.smartstore");
